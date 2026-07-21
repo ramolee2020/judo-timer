@@ -22,8 +22,8 @@ const TTS_FALLBACK_TEXT = {
 // (максимум 1 = "как записано"), поэтому громкость реально поднимаем через Web Audio
 // (GainNode > 1), а следом ставим компрессор — иначе усиленные пики просто хрипят/клипуют
 // на слабом динамике телефона.
-const VOICE_GAIN = 3;
-const BEEP_VOLUME = 0.65; // раньше 0.18 — почти в 4 раза громче
+const VOICE_GAIN = 6;
+const BEEP_VOLUME = 0.55; // тише самого синуса, зато с обертоном (см. countdownTickBeep) звучит ярче и громче на слух
 
 const audioElements = {};
 const mediaSources = {};
@@ -61,25 +61,30 @@ function ensureCtx() {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (Ctx) {
       audioCtx = new Ctx();
+      // Жёсткий лимитер (низкий threshold, высокий ratio, быстрая атака) вместо мягкого
+      // компрессора — это позволяет держать GainNode сильно выше 1 не срезая пики в хрип,
+      // а следующая makeupGain досредняет итоговую громкость до края лимитера.
       compressor = audioCtx.createDynamicsCompressor();
-      compressor.threshold.value = -12;
-      compressor.knee.value = 6;
-      compressor.ratio.value = 12;
-      compressor.attack.value = 0.003;
-      compressor.release.value = 0.15;
-      compressor.connect(audioCtx.destination);
+      compressor.threshold.value = -28;
+      compressor.knee.value = 4;
+      compressor.ratio.value = 20;
+      compressor.attack.value = 0.001;
+      compressor.release.value = 0.1;
+      const makeupGain = audioCtx.createGain();
+      makeupGain.gain.value = 1.8;
+      compressor.connect(makeupGain).connect(audioCtx.destination);
     }
   }
   return audioCtx;
 }
 
-function tone(freq, durMs, volume) {
+function tone(freq, durMs, volume, type) {
   const ctx = ensureCtx();
   if (!ctx) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
-  osc.type = "sine";
+  osc.type = type || "sine";
   osc.frequency.value = freq;
   gain.gain.value = volume;
   osc.connect(gain).connect(compressor);
@@ -90,8 +95,12 @@ function tone(freq, durMs, volume) {
   osc.stop(now + durMs / 1000);
 }
 
+// "Звонкий" бип вместо глухого синуса: треугольная волна (богаче обертонами, но не режет
+// слух как прямоугольная) на более высокой частоте + тихий обертон на октаву выше — вместе
+// звучит как "динь", а не "бум".
 export function countdownTickBeep() {
-  tone(880, 90, BEEP_VOLUME);
+  tone(1568, 90, BEEP_VOLUME, "triangle");
+  tone(3136, 70, BEEP_VOLUME * 0.35, "sine");
 }
 
 // На самом первом запуске приложения (холодный кэш, файлы ещё не скачаны) разблокировка
