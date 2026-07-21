@@ -1,4 +1,4 @@
-const CACHE = "judo-timer-v4";
+const CACHE = "judo-timer-v5";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./styles.css",
   "./js/app.js", "./js/state.js", "./js/timer-engine.js", "./js/audio.js",

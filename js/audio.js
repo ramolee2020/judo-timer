@@ -18,7 +18,30 @@ const TTS_FALLBACK_TEXT = {
   done: "Соромадэ",
 };
 
+// Записи с телефона тренера — тихие. Обычный volume у <audio> может только приглушать
+// (максимум 1 = "как записано"), поэтому громкость реально поднимаем через Web Audio
+// (GainNode > 1), а следом ставим компрессор — иначе усиленные пики просто хрипят/клипуют
+// на слабом динамике телефона.
+const VOICE_GAIN = 3;
+const BEEP_VOLUME = 0.65; // раньше 0.18 — почти в 4 раза громче
+
 const audioElements = {};
+const mediaSources = {};
+
+function wireGain(phase, el) {
+  const ctx = ensureCtx();
+  if (!ctx || mediaSources[phase]) return;
+  try {
+    const source = ctx.createMediaElementSource(el);
+    const gainNode = ctx.createGain();
+    gainNode.gain.value = VOICE_GAIN;
+    source.connect(gainNode).connect(compressor);
+    mediaSources[phase] = { source, gainNode };
+  } catch (e) {
+    // если узел уже создавался раньше для этого элемента — просто играем без усиления
+  }
+}
+
 function getAudioEl(phase) {
   const src = PHRASE_FILES[phase];
   if (!src) return null;
@@ -26,15 +49,26 @@ function getAudioEl(phase) {
     const el = new Audio(src);
     el.preload = "auto";
     audioElements[phase] = el;
+    wireGain(phase, el);
   }
   return audioElements[phase];
 }
 
 let audioCtx = null;
+let compressor = null;
 function ensureCtx() {
   if (!audioCtx) {
     const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (Ctx) audioCtx = new Ctx();
+    if (Ctx) {
+      audioCtx = new Ctx();
+      compressor = audioCtx.createDynamicsCompressor();
+      compressor.threshold.value = -12;
+      compressor.knee.value = 6;
+      compressor.ratio.value = 12;
+      compressor.attack.value = 0.003;
+      compressor.release.value = 0.15;
+      compressor.connect(audioCtx.destination);
+    }
   }
   return audioCtx;
 }
@@ -48,7 +82,7 @@ function tone(freq, durMs, volume) {
   osc.type = "sine";
   osc.frequency.value = freq;
   gain.gain.value = volume;
-  osc.connect(gain).connect(ctx.destination);
+  osc.connect(gain).connect(compressor);
   const now = ctx.currentTime;
   gain.gain.setValueAtTime(volume, now);
   gain.gain.exponentialRampToValueAtTime(0.001, now + durMs / 1000);
@@ -57,7 +91,7 @@ function tone(freq, durMs, volume) {
 }
 
 export function countdownTickBeep() {
-  tone(880, 90, 0.18);
+  tone(880, 90, BEEP_VOLUME);
 }
 
 // На самом первом запуске приложения (холодный кэш, файлы ещё не скачаны) разблокировка
@@ -73,7 +107,8 @@ function withTimeout(promise, ms) {
 
 export function unlockAudio() {
   if (unlockPromise) return unlockPromise;
-  ensureCtx();
+  const ctx = ensureCtx();
+  if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
   const tasks = Object.keys(PHRASE_FILES).map((phase) => {
     const el = getAudioEl(phase);
     if (!el) return Promise.resolve();
