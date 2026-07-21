@@ -19,11 +19,18 @@ const VIBRATE_PATTERNS = {
 
 const FINISH_DELAY_MS = 2500; // время дать дослушать "Соромадэ" перед авто-возвратом к настройкам
 
+// "Приготовились" и бип-отсчёт подготовки должны звучать за 10 сек до конца подготовки
+// (не в самом начале длинной подготовки, где тренирующиеся ещё далеко от начала работы) —
+// если сама подготовка короче этого окна, объявляем сразу, откладывать некуда.
+const PREP_WARN_LEAD_SEC = 10;
+
 export function initRunView({ onBackToSetup, onFinished }) {
   const runEl = document.getElementById("viewRun");
   const phaseLabelEl = document.getElementById("runPhaseLabel");
+  const ringEl = document.getElementById("runRing");
   const timeEl = document.getElementById("runTime");
   const roundInfoEl = document.getElementById("runRoundInfo");
+  const dotsEl = document.getElementById("runDots");
   const totalEl = document.getElementById("runTotal");
   const pauseBtn = document.getElementById("pauseBtn");
   const prevBtn = document.getElementById("prevCycleBtn");
@@ -39,6 +46,7 @@ export function initRunView({ onBackToSetup, onFinished }) {
   let active = false; // есть загруженная сессия (в т.ч. на паузе), не завершена и не сброшена
   let lastAnnouncedIndex = -1;
   let lastBeepSecond = null;
+  let prepVoiceFired = false;
   let tickHandle = null;
   let wakeLock = null;
 
@@ -78,13 +86,34 @@ export function initRunView({ onBackToSetup, onFinished }) {
     return text;
   }
 
+  // Точки-индикаторы циклов текущего сета — считываются издалека без чтения текста
+  // "Цикл X из Y". Для фаз вне сетки циклов (подготовка) все точки остаются нейтральными.
+  function renderDots(phase) {
+    const cycles = currentParams.cycles;
+    dotsEl.innerHTML = "";
+    for (let i = 1; i <= cycles; i++) {
+      const dot = document.createElement("span");
+      dot.className = "dot";
+      if (phase.type === "cooldown" || phase.cycle > i) {
+        dot.className += " done";
+      } else if (phase.cycle === i && (phase.type === "work" || phase.type === "rest")) {
+        dot.className += " current";
+      }
+      dotsEl.appendChild(dot);
+    }
+  }
+
   function render() {
     const loc = locate(seq, computeElapsedMs() / 1000);
     if (loc.index >= seq.length) {
       runEl.dataset.phase = "done";
       phaseLabelEl.textContent = "Готово";
       timeEl.textContent = "00:00";
+      timeEl.classList.remove("pulse");
+      ringEl.style.setProperty("--pct", 100);
+      ringEl.classList.remove("pulse-flash");
       roundInfoEl.textContent = "Тренировка завершена";
+      renderDots({ type: "cooldown", cycle: currentParams.cycles });
       totalEl.textContent = "Осталось всего: 00:00";
       pauseBtn.disabled = true;
       prevBtn.disabled = true;
@@ -92,10 +121,16 @@ export function initRunView({ onBackToSetup, onFinished }) {
       return;
     }
     const phase = seq[loc.index];
+    const remaining = phase.duration - loc.elapsedInPhase;
     runEl.dataset.phase = phase.type;
     phaseLabelEl.textContent = PHASE_LABELS[phase.type];
-    timeEl.textContent = fmtClock(phase.duration - loc.elapsedInPhase);
+    timeEl.textContent = fmtClock(remaining);
+    ringEl.style.setProperty("--pct", (phase.duration ? Math.max(0, Math.min(100, remaining / phase.duration * 100)) : 0).toFixed(2));
+    const lastSeconds = remaining > 0 && remaining <= 3;
+    timeEl.classList.toggle("pulse", lastSeconds);
+    ringEl.classList.toggle("pulse-flash", lastSeconds);
     roundInfoEl.textContent = roundInfoText(phase);
+    renderDots(phase);
     totalEl.textContent = "Осталось всего: " + fmtClock(remainingFromIndex(seq, loc.index, loc.elapsedInPhase));
     pauseBtn.disabled = false;
     pauseBtn.textContent = running ? "Пауза" : "Продолжить";
@@ -111,9 +146,15 @@ export function initRunView({ onBackToSetup, onFinished }) {
       return;
     }
     const phase = seq[index];
-    speakPhrase(phase.type);
     vibrate(VIBRATE_PATTERNS[phase.type] || [80]);
     liveEl.textContent = PHASE_LABELS[phase.type];
+    // Длинную подготовку не объявляем голосом сразу в начале — откладываем до
+    // PREP_WARN_LEAD_SEC до конца (см. tick()), чтобы "Приготовились" не потерялось
+    // за много секунд до самой работы. Короткую (короче окна) — объявляем сразу,
+    // откладывать всё равно некуда.
+    if (phase.type === "prep" && phase.duration >= PREP_WARN_LEAD_SEC) return;
+    if (phase.type === "prep") prepVoiceFired = true;
+    speakPhrase(phase.type);
   }
 
   function finish() {
@@ -131,6 +172,7 @@ export function initRunView({ onBackToSetup, onFinished }) {
     if (loc.index !== lastAnnouncedIndex) {
       lastAnnouncedIndex = loc.index;
       lastBeepSecond = null;
+      prepVoiceFired = false;
       announce(loc.index);
       if (loc.index >= seq.length) {
         finish();
@@ -140,9 +182,16 @@ export function initRunView({ onBackToSetup, onFinished }) {
     const phase = seq[loc.index];
     const remaining = phase.duration - loc.elapsedInPhase;
     const remainingCeil = Math.ceil(remaining);
-    if (remaining > 0 && remaining <= 3 && remainingCeil !== lastBeepSecond) {
+    // В подготовке бип-отсчёт идёт с тем же запасом, что и голосовое предупреждение
+    // (PREP_WARN_LEAD_SEC) — в остальных фазах, как раньше, только последние 3 сек.
+    const beepLead = phase.type === "prep" ? PREP_WARN_LEAD_SEC : 3;
+    if (remaining > 0 && remaining <= beepLead && remainingCeil !== lastBeepSecond) {
       lastBeepSecond = remainingCeil;
       countdownTickBeep();
+    }
+    if (phase.type === "prep" && !prepVoiceFired && remaining <= PREP_WARN_LEAD_SEC) {
+      prepVoiceFired = true;
+      speakPhrase("prep");
     }
     render();
   }
