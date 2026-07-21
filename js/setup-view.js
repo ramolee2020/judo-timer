@@ -12,7 +12,6 @@ const FIELDS = [
   { key: "cycles", label: "Циклы", step: 1 },
   { key: "sets", label: "Сеты", step: 1 },
   { key: "restSets", label: "Отдых между сетами, сек", step: 5 },
-  { key: "cooldown", label: "Заминка, сек", step: 5 },
 ];
 
 // Простые монолинейные SVG-иконки для каждого поля — свои, без внешних шрифтов/иконок
@@ -24,7 +23,6 @@ const ICONS = {
   cycles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 14-5.3L21 9"/><path d="M21 4v5h-5"/><path d="M20 12a8 8 0 0 1-14 5.3L3 15"/><path d="M3 20v-5h5"/></svg>',
   sets: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>',
   restSets: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3v2M12 3v2"/></svg>',
-  cooldown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17l17.4-10"/></svg>',
 };
 
 export function initSetupView(app) {
@@ -34,7 +32,7 @@ export function initSetupView(app) {
   const savePresetBtn = document.getElementById("savePresetBtn");
   const toggleSavedBtn = document.getElementById("toggleSavedBtn");
   const savedList = document.getElementById("savedList");
-  const discardRunBtn = document.getElementById("discardRunBtn");
+  const continuePausedBtn = document.getElementById("continuePausedBtn");
   const setupHint = document.getElementById("setupHint");
 
   let params = { ...app.store.lastParams };
@@ -195,25 +193,23 @@ export function initSetupView(app) {
     renderSavedList();
   });
 
+  // "Старт" всегда начинает новую тренировку с текущими настройками — даже если есть
+  // тренировка на паузе, она в этом случае просто перезаписывается. Продолжить старую
+  // (если она вдруг нужна) — отдельная мелкая ссылка ниже, а не то, что происходит по умолчанию.
   startBtn.addEventListener("click", () => {
-    if (app.hasPausedRun()) {
-      app.continueRun({ ...params });
-    } else {
-      app.startTraining({ ...params });
-    }
+    app.startTraining({ ...params });
   });
 
-  discardRunBtn.addEventListener("click", () => {
-    app.discardRun();
-    refreshRunControls();
+  continuePausedBtn.addEventListener("click", () => {
+    app.continueRun({ ...params });
   });
 
   function refreshRunControls() {
     const hasPaused = app.hasPausedRun();
-    startBtn.textContent = hasPaused ? "Продолжить" : "Старт";
-    discardRunBtn.hidden = !hasPaused;
+    startBtn.textContent = "Старт";
+    continuePausedBtn.hidden = !hasPaused;
     setupHint.textContent = hasPaused
-      ? "Тренировка на паузе. Можно поправить параметры и продолжить, либо начать заново."
+      ? "Есть тренировка на паузе. «Старт» начнёт новую с текущими настройками — чтобы вернуться к прежней, используйте «Продолжить предыдущую тренировку» ниже."
       : "";
   }
 

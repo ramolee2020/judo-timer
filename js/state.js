@@ -1,9 +1,9 @@
 // Хранилище настроек тренера: последние введённые параметры и сохранённые
 // пользовательские заготовки. Живёт в localStorage, переживает перезапуск приложения.
 
-export const DEFAULT_PARAMS = { prep: 10, work: 180, rest: 30, cycles: 5, sets: 1, restSets: 60, cooldown: 0 };
+export const DEFAULT_PARAMS = { prep: 10, work: 180, rest: 30, cycles: 5, sets: 1, restSets: 60 };
 
-export const FIELD_MIN = { prep: 0, work: 5, rest: 0, cycles: 1, sets: 1, restSets: 0, cooldown: 0 };
+export const FIELD_MIN = { prep: 0, work: 5, rest: 0, cycles: 1, sets: 1, restSets: 0 };
 
 const STORE_KEY = "judoTimer.v2.store";
 const RUN_KEY = "judoTimer.v2.run";

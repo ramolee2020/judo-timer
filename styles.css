@@ -101,7 +101,7 @@ body[data-view="run"] .run{display:flex;}
   padding:max(18px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom));
   color:#fff;background:var(--tatami);transition:background-color .4s ease;
 }
-.run[data-phase="prep"],.run[data-phase="cooldown"]{background:var(--judo-blue);}
+.run[data-phase="prep"]{background:var(--judo-blue);}
 .run[data-phase="work"]{background:var(--tatami);}
 .run[data-phase="rest"],.run[data-phase="restSets"]{background:var(--score-red);}
 .run[data-phase="done"]{background:var(--tatami-deep);}

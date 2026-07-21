@@ -28,19 +28,18 @@ const setupView = initSetupView({
   startTraining(params) {
     store.lastParams = { ...params };
     saveStore(store);
-    unlockAudio();
-    runView.start(params);
-    showView("run");
+    unlockAudio().then(() => {
+      runView.start(params);
+      showView("run");
+    });
   },
   continueRun(params) {
     store.lastParams = { ...params };
     saveStore(store);
-    unlockAudio();
-    runView.continueRun(params);
-    showView("run");
-  },
-  discardRun() {
-    runView.discard();
+    unlockAudio().then(() => {
+      runView.continueRun(params);
+      showView("run");
+    });
   },
   hasPausedRun: () => runView.hasActiveSession(),
   getActiveParams: () => runView.getActiveParams(),

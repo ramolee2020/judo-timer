@@ -14,7 +14,7 @@ import { speakPhrase, countdownTickBeep, vibrate } from "./audio.js";
 import { saveRunState, loadRunState, clearRunState } from "./state.js";
 
 const VIBRATE_PATTERNS = {
-  prep: [60], work: [80, 60, 80], rest: [200], restSets: [200, 100, 200], cooldown: [300],
+  prep: [60], work: [80, 60, 80], rest: [200], restSets: [200, 100, 200],
 };
 
 const FINISH_DELAY_MS = 2500; // время дать дослушать "Соромадэ" перед авто-возвратом к настройкам
@@ -77,7 +77,6 @@ export function initRunView({ onBackToSetup, onFinished }) {
 
   function roundInfoText(phase) {
     if (phase.type === "prep") return "Подготовка";
-    if (phase.type === "cooldown") return "Заминка";
     if (phase.type === "restSets") {
       return "Отдых между сетами" + (currentParams.sets > 1 ? " · Сет " + phase.set + " из " + currentParams.sets : "");
     }
@@ -94,7 +93,7 @@ export function initRunView({ onBackToSetup, onFinished }) {
     for (let i = 1; i <= cycles; i++) {
       const dot = document.createElement("span");
       dot.className = "dot";
-      if (phase.type === "cooldown" || phase.cycle > i) {
+      if (phase.cycle > i) {
         dot.className += " done";
       } else if (phase.cycle === i && (phase.type === "work" || phase.type === "rest")) {
         dot.className += " current";
@@ -113,7 +112,7 @@ export function initRunView({ onBackToSetup, onFinished }) {
       ringEl.style.setProperty("--pct", 100);
       ringEl.classList.remove("pulse-flash");
       roundInfoEl.textContent = "Тренировка завершена";
-      renderDots({ type: "cooldown", cycle: currentParams.cycles });
+      renderDots({ cycle: currentParams.cycles + 1 });
       totalEl.textContent = "Осталось всего: 00:00";
       pauseBtn.disabled = true;
       prevBtn.disabled = true;
@@ -182,9 +181,10 @@ export function initRunView({ onBackToSetup, onFinished }) {
     const phase = seq[loc.index];
     const remaining = phase.duration - loc.elapsedInPhase;
     const remainingCeil = Math.ceil(remaining);
-    // В подготовке бип-отсчёт идёт с тем же запасом, что и голосовое предупреждение
-    // (PREP_WARN_LEAD_SEC) — в остальных фазах, как раньше, только последние 3 сек.
-    const beepLead = phase.type === "prep" ? PREP_WARN_LEAD_SEC : 3;
+    // Бип-отсчёт — всегда только последние 3 секунды фазы, независимо от типа.
+    // Голосовое предупреждение "Приготовились" для длинной подготовки при этом
+    // всё равно звучит заранее (см. PREP_WARN_LEAD_SEC ниже) — это разные вещи.
+    const beepLead = 3;
     if (remaining > 0 && remaining <= beepLead && remainingCeil !== lastBeepSecond) {
       lastBeepSecond = remainingCeil;
       countdownTickBeep();
@@ -218,9 +218,11 @@ export function initRunView({ onBackToSetup, onFinished }) {
     tick();
   }
 
-  // Трениер поправил параметры на паузе и жмёт "Продолжить": пересобираем последовательность,
-  // но встаём на начало той же фазы (по типу/циклу/сету), на которой остановились — без попытки
-  // сохранить дробные секунды внутри фазы, это была бы точность ради точности.
+  // Тренер вернулся из настроек (поправил параметры или нет) и жмёт "Продолжить":
+  // пересобираем последовательность и встаём на ту же фазу (по типу/циклу/сету), на которой
+  // остановились, сохраняя секунды, уже прошедшие внутри неё — это тот же "продолжить с того же
+  // места", что и обычная пауза/резюме, просто через экран настроек. lastAnnouncedIndex выставляем
+  // на текущий индекс (а не -1), чтобы фраза фазы не звучала заново, если это не новая фаза.
   function continueRun(newParams) {
     const loc = locate(seq, computeElapsedMs() / 1000);
     const oldPhase = loc.index < seq.length ? seq[loc.index] : null;
@@ -230,13 +232,14 @@ export function initRunView({ onBackToSetup, onFinished }) {
       const found = newSeq.findIndex((ph) => ph.type === oldPhase.type && ph.cycle === oldPhase.cycle && ph.set === oldPhase.set);
       if (found >= 0) newIndex = found;
     }
+    const elapsedInPhase = oldPhase ? Math.min(loc.elapsedInPhase, newSeq[newIndex] ? newSeq[newIndex].duration : 0) : 0;
     currentParams = newParams;
     seq = newSeq;
-    baseElapsedMs = cumulativeBefore(seq, newIndex) * 1000;
+    baseElapsedMs = (cumulativeBefore(seq, newIndex) + elapsedInPhase) * 1000;
     baseTimestamp = Date.now();
     running = true;
     active = true;
-    lastAnnouncedIndex = -1;
+    lastAnnouncedIndex = newIndex;
     persist();
     acquireWakeLock();
     startTicking();
@@ -292,14 +295,6 @@ export function initRunView({ onBackToSetup, onFinished }) {
     return true;
   }
 
-  function discard() {
-    running = false;
-    active = false;
-    stopTicking();
-    releaseWakeLock();
-    clearRunState();
-  }
-
   pauseBtn.addEventListener("click", () => (running ? pause() : resume()));
   prevBtn.addEventListener("click", () => jump(-1));
   nextBtn.addEventListener("click", () => jump(1));
@@ -312,7 +307,6 @@ export function initRunView({ onBackToSetup, onFinished }) {
     start,
     continueRun,
     tryResumeFromSaved,
-    discard,
     hasActiveSession: () => active,
     getActiveParams: () => currentParams,
   };

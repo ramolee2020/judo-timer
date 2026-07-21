@@ -10,7 +10,6 @@ export const PHASE_LABELS = {
   work: "Работа",
   rest: "Отдых",
   restSets: "Отдых между сетами",
-  cooldown: "Заминка",
   done: "Готово",
 };
 
@@ -28,7 +27,6 @@ export function buildSequence(p) {
       seq.push({ type: "restSets", duration: p.restSets, set: s, cycle: p.cycles });
     }
   }
-  if (p.cooldown > 0) seq.push({ type: "cooldown", duration: p.cooldown, set: p.sets, cycle: p.cycles });
   return seq;
 }
 

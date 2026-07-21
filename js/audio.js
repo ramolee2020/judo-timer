@@ -60,19 +60,28 @@ export function countdownTickBeep() {
   tone(880, 90, 0.18);
 }
 
-let unlocked = false;
+// На самом первом запуске приложения (холодный кэш, файлы ещё не скачаны) разблокировка
+// каждого аудио-элемента может занять заметное время — если реальная фраза (например,
+// "Приготовились" в начале подготовки) звучит раньше, чем долетит эта разблокировка,
+// браузер её тихо блокирует. unlockAudio() поэтому возвращает промис, который вызывающий
+// код (app.js) ждёт перед стартом отсчёта — с таймаутом на случай, если play() никогда не
+// разрешится (не должны блокировать старт тренировки бесконечно).
+let unlockPromise = null;
+function withTimeout(promise, ms) {
+  return Promise.race([promise, new Promise((resolve) => setTimeout(resolve, ms))]);
+}
+
 export function unlockAudio() {
-  if (unlocked) return;
-  unlocked = true;
+  if (unlockPromise) return unlockPromise;
   ensureCtx();
-  Object.keys(PHRASE_FILES).forEach((phase) => {
+  const tasks = Object.keys(PHRASE_FILES).map((phase) => {
     const el = getAudioEl(phase);
-    if (!el) return;
+    if (!el) return Promise.resolve();
     const prevVolume = el.volume;
     el.volume = 0;
     const p = el.play();
     if (p && p.then) {
-      p.then(() => {
+      return p.then(() => {
         el.pause();
         el.currentTime = 0;
         el.volume = prevVolume;
@@ -80,8 +89,11 @@ export function unlockAudio() {
         el.volume = prevVolume;
       });
     }
+    return Promise.resolve();
   });
   if ("speechSynthesis" in window) window.speechSynthesis.resume();
+  unlockPromise = withTimeout(Promise.all(tasks), 1200);
+  return unlockPromise;
 }
 
 function speakFallback(phase) {
