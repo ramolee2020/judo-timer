@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>judo-timer</title>
+<meta name="description" content="judo-timer — интервальный таймер для тренировок дзюдо: Хаджимэ / Матэ, своя настройка раундов и сохранённые тренировки.">
+<meta name="theme-color" content="#142a20">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="icon" href="assets/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-view="setup">
+
+<!-- ===== Экран 1: Программирование ===== -->
+<div class="app view-setup" id="viewSetup">
+  <div class="topbar">
+    <a class="brand" href="../judo-samara/index.html">
+      <img src="assets/icon-192.png" alt="">
+      <span>judo-timer</span>
+    </a>
+    <span class="eyebrow">Таймер тренировки</span>
+  </div>
+
+  <div class="saved-row" id="savedRow">
+    <button type="button" class="text-btn" id="toggleSavedBtn" aria-expanded="false">Сохранённые тренировки</button>
+    <button type="button" class="text-btn" id="savePresetBtn">Сохранить эту тренировку</button>
+  </div>
+  <div class="saved-list" id="savedList" hidden></div>
+
+  <div class="summary-line" id="summaryLine">15:00 · 5 циклов</div>
+
+  <div class="settings-list" id="fieldsList"></div>
+
+  <div class="dial-wrap">
+    <button class="ctrl primary" id="startBtn" type="button">Старт</button>
+    <button class="text-btn" id="discardRunBtn" hidden type="button">Начать заново</button>
+  </div>
+
+  <p class="hint" id="setupHint"></p>
+</div>
+
+<!-- ===== Экран 2: Рабочий экран ===== -->
+<div class="run" id="viewRun" data-phase="work">
+  <button class="run-back" id="backBtn" type="button" aria-label="Назад к настройкам">← Настройки</button>
+
+  <div class="run-center">
+    <span class="run-phase-label" id="runPhaseLabel">Работа</span>
+    <span class="run-time" id="runTime">03:00</span>
+    <span class="run-round-info" id="runRoundInfo">Цикл 1 из 5</span>
+  </div>
+
+  <span class="run-total" id="runTotal">Осталось всего: 15:00</span>
+
+  <div class="run-controls">
+    <button class="ctrl secondary" id="prevCycleBtn" type="button" aria-label="Предыдущий цикл">‹</button>
+    <button class="ctrl primary" id="pauseBtn" type="button">Пауза</button>
+    <button class="ctrl secondary" id="nextCycleBtn" type="button" aria-label="Следующий цикл">›</button>
+  </div>
+
+  <div aria-live="polite" class="sr-only" id="live"></div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
