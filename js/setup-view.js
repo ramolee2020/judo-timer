@@ -100,10 +100,13 @@ export function initSetupView(app) {
       iconEl.innerHTML = ICONS[key] || "";
       row.appendChild(iconEl);
 
+      const body = document.createElement("div");
+      body.className = "field-body";
+
       const labelEl = document.createElement("span");
       labelEl.className = "field-label";
       labelEl.textContent = label;
-      row.appendChild(labelEl);
+      body.appendChild(labelEl);
 
       const stepper = document.createElement("div");
       stepper.className = "stepper";
@@ -130,7 +133,8 @@ export function initSetupView(app) {
       plus.addEventListener("click", () => adjust(key, step));
       stepper.appendChild(plus);
 
-      row.appendChild(stepper);
+      body.appendChild(stepper);
+      row.appendChild(body);
       fieldsList.appendChild(row);
     });
   }
