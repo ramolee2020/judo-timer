@@ -8,7 +8,7 @@
 
 import {
   buildSequence, locate, remainingFromIndex, cumulativeBefore, jumpTarget,
-  fmtClock, PHASE_LABELS,
+  fmtClock, PHASE_LABELS, totalDuration,
 } from "./timer-engine.js";
 import { speakPhrase, countdownTickBeep, vibrate } from "./audio.js";
 import { saveRunState, loadRunState, clearRunState } from "./state.js";
@@ -32,6 +32,7 @@ export function initRunView({ onBackToSetup, onFinished }) {
   const roundInfoEl = document.getElementById("runRoundInfo");
   const dotsEl = document.getElementById("runDots");
   const totalEl = document.getElementById("runTotal");
+  const progressFillEl = document.getElementById("runProgressFill");
   const pauseBtn = document.getElementById("pauseBtn");
   const prevBtn = document.getElementById("prevCycleBtn");
   const nextBtn = document.getElementById("nextCycleBtn");
@@ -85,25 +86,36 @@ export function initRunView({ onBackToSetup, onFinished }) {
     return text;
   }
 
-  // Точки-индикаторы циклов текущего сета — считываются издалека без чтения текста
-  // "Цикл X из Y". Для фаз вне сетки циклов (подготовка) все точки остаются нейтральными.
+  // Точки-индикаторы циклов — считываются издалека без чтения текста "Цикл X из Y".
+  // При нескольких сетах точки сгруппированы по сетам (с разделителем между группами),
+  // чтобы была видна структура всей тренировки, а не только текущего сета.
+  // Для фаз вне сетки циклов (подготовка) все точки остаются нейтральными.
   function renderDots(phase) {
     const cycles = currentParams.cycles;
+    const sets = currentParams.sets;
     dotsEl.innerHTML = "";
-    for (let i = 1; i <= cycles; i++) {
-      const dot = document.createElement("span");
-      dot.className = "dot";
-      if (phase.cycle > i) {
-        dot.className += " done";
-      } else if (phase.cycle === i && (phase.type === "work" || phase.type === "rest")) {
-        dot.className += " current";
+    for (let s = 1; s <= sets; s++) {
+      if (s > 1) {
+        const sep = document.createElement("span");
+        sep.className = "dot-sep";
+        dotsEl.appendChild(sep);
       }
-      dotsEl.appendChild(dot);
+      for (let i = 1; i <= cycles; i++) {
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        if (phase.set > s || (phase.set === s && phase.cycle > i)) {
+          dot.className += " done";
+        } else if (phase.set === s && phase.cycle === i && (phase.type === "work" || phase.type === "rest")) {
+          dot.className += " current";
+        }
+        dotsEl.appendChild(dot);
+      }
     }
   }
 
   function render() {
     const loc = locate(seq, computeElapsedMs() / 1000);
+    const wholeTotal = totalDuration(seq);
     if (loc.index >= seq.length) {
       runEl.dataset.phase = "done";
       phaseLabelEl.textContent = "Готово";
@@ -111,8 +123,9 @@ export function initRunView({ onBackToSetup, onFinished }) {
       timeEl.classList.remove("pulse");
       ringEl.style.setProperty("--pct", 100);
       ringEl.classList.remove("pulse-flash");
+      progressFillEl.style.width = "100%";
       roundInfoEl.textContent = "Тренировка завершена";
-      renderDots({ cycle: currentParams.cycles + 1 });
+      renderDots({ set: Infinity, cycle: Infinity });
       totalEl.textContent = "Осталось всего: 00:00";
       pauseBtn.disabled = true;
       prevBtn.disabled = true;
@@ -130,6 +143,8 @@ export function initRunView({ onBackToSetup, onFinished }) {
     ringEl.classList.toggle("pulse-flash", lastSeconds);
     roundInfoEl.textContent = roundInfoText(phase);
     renderDots(phase);
+    const elapsedWhole = cumulativeBefore(seq, loc.index) + loc.elapsedInPhase;
+    progressFillEl.style.width = (wholeTotal ? Math.max(0, Math.min(100, elapsedWhole / wholeTotal * 100)) : 0).toFixed(2) + "%";
     totalEl.textContent = "Осталось всего: " + fmtClock(remainingFromIndex(seq, loc.index, loc.elapsedInPhase));
     pauseBtn.disabled = false;
     pauseBtn.textContent = running ? "Пауза" : "Продолжить";

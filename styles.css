@@ -63,6 +63,15 @@ body[data-view="run"] .run{display:flex;}
   letter-spacing:.04em;color:var(--text-soft);margin-top:14px;font-variant-numeric:tabular-nums;}
 .summary-line b{color:var(--ink);}
 
+/* Мини-таймлайн тренировки: форма тренировки одним взглядом ещё до старта — сегменты
+   пропорциональны длительности фаз (flex-grow = duration), цвет как на рабочем экране. */
+.timeline{display:flex;gap:1px;height:8px;border-radius:4px;overflow:hidden;
+  margin-top:10px;background:var(--paper-line);}
+.timeline .seg{height:100%;}
+.timeline .seg-prep{background:var(--judo-blue);}
+.timeline .seg-work{background:var(--tatami);}
+.timeline .seg-rest,.timeline .seg-restSets{background:var(--score-red);}
+
 .settings-list{display:flex;flex-direction:column;gap:1px;background:var(--paper-line);
   border:1px solid var(--paper-line);border-radius:10px;overflow:hidden;margin-top:10px;}
 .field-row{background:var(--paper);display:flex;align-items:center;
@@ -100,7 +109,7 @@ body[data-view="run"] .run{display:flex;}
 
 /* ===== Экран 2: Рабочий экран ===== */
 .run{
-  min-height:100dvh;width:100%;flex-direction:column;align-items:center;justify-content:space-between;
+  position:relative;min-height:100dvh;width:100%;flex-direction:column;align-items:center;justify-content:space-between;
   padding:max(18px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom));
   color:#fff;background:var(--tatami);transition:background-color .4s ease;
 }
@@ -108,6 +117,12 @@ body[data-view="run"] .run{display:flex;}
 .run[data-phase="work"]{background:var(--tatami);}
 .run[data-phase="rest"],.run[data-phase="restSets"]{background:var(--score-red);}
 .run[data-phase="done"]{background:var(--tatami-deep);}
+
+/* Полоса прогресса всей тренировки (не только текущей фазы) — вдоль самого верха экрана,
+   поверх safe-area, как индикатор загрузки видео. Отдельно от кольца, которое всегда
+   про текущую фазу. */
+.run-progress{position:absolute;top:0;left:0;right:0;height:4px;background:rgba(255,255,255,.22);z-index:5;}
+.run-progress-fill{height:100%;width:0%;background:#fff;transition:width .25s linear;}
 
 .run-back{align-self:flex-start;background:rgba(255,255,255,.16);border:none;color:#fff;
   border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;}
@@ -130,13 +145,14 @@ body[data-view="run"] .run{display:flex;}
 @keyframes runTimePulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
 .run-time.pulse{animation:runTimePulse .5s ease-in-out infinite;}
 
-.run-round-info{font-size:clamp(14px,3vw,20px);color:#fff;opacity:.82;font-variant-numeric:tabular-nums;}
+.run-round-info{font-size:clamp(14px,3vw,20px);font-weight:600;color:#fff;opacity:.96;font-variant-numeric:tabular-nums;}
 .run-dots{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;max-width:80vw;}
 .run-dots .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.32);flex:none;
   transition:transform .15s ease,background .15s ease,box-shadow .15s ease;}
 .run-dots .dot.done{background:rgba(255,255,255,.9);}
 .run-dots .dot.current{background:#fff;transform:scale(1.3);box-shadow:0 0 0 4px rgba(255,255,255,.25);}
-.run-total{font-size:clamp(13px,2.4vw,17px);color:#fff;opacity:.72;padding-bottom:6px;}
+.run-dots .dot-sep{width:1px;height:14px;background:rgba(255,255,255,.4);flex:none;}
+.run-total{font-size:clamp(13px,2.4vw,17px);font-weight:600;color:#fff;opacity:.9;padding-bottom:6px;}
 
 .run-controls{display:flex;align-items:center;justify-content:center;gap:16px;width:100%;}
 .run-controls .ctrl.primary{flex:1;height:72px;font-size:18px;

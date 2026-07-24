@@ -28,6 +28,7 @@ const ICONS = {
 export function initSetupView(app) {
   const fieldsList = document.getElementById("fieldsList");
   const summaryLine = document.getElementById("summaryLine");
+  const timelineEl = document.getElementById("timeline");
   const startBtn = document.getElementById("startBtn");
   const savePresetBtn = document.getElementById("savePresetBtn");
   const toggleSavedBtn = document.getElementById("toggleSavedBtn");
@@ -175,6 +176,20 @@ export function initSetupView(app) {
     summaryLine.innerHTML =
       "<b>" + fmtClock(total) + "</b> · " + cycleCount + " " + pluralCycles(cycleCount) +
       (params.sets > 1 ? " · " + params.sets + " сет." : "");
+    renderTimeline(seq);
+  }
+
+  // Форма тренировки одним взглядом до старта: сегменты пропорциональны длительности
+  // фаз (flex-grow = duration в секундах), цвет как на рабочем экране.
+  function renderTimeline(seq) {
+    timelineEl.innerHTML = "";
+    seq.forEach((phase) => {
+      if (!phase.duration) return;
+      const seg = document.createElement("span");
+      seg.className = "seg seg-" + phase.type;
+      seg.style.flex = phase.duration + " 0 0";
+      timelineEl.appendChild(seg);
+    });
   }
 
   function pluralCycles(n) {
