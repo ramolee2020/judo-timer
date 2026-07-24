@@ -22,8 +22,8 @@ const TTS_FALLBACK_TEXT = {
 // (максимум 1 = "как записано"), поэтому громкость реально поднимаем через Web Audio
 // (GainNode > 1), а следом ставим компрессор — иначе усиленные пики просто хрипят/клипуют
 // на слабом динамике телефона.
-const VOICE_GAIN = 6;
-const BEEP_VOLUME = 0.55; // тише самого синуса, зато с обертоном (см. countdownTickBeep) звучит ярче и громче на слух
+const VOICE_GAIN = 9;
+const BEEP_VOLUME = 0.75; // тише самого синуса, зато с обертоном (см. countdownTickBeep) звучит ярче и громче на слух
 
 const audioElements = {};
 const mediaSources = {};
@@ -54,6 +54,22 @@ function getAudioEl(phase) {
   return audioElements[phase];
 }
 
+// Мягкий сатуратор (tanh-кривая через WaveShaper) на самом конце цепи: то, что лимитер
+// после makeupGain всё ещё пропускает к краю 0dBFS, здесь не звучит цифровым "щёлк-хрипом"
+// на пиках, а мягко "закругляется" — тот же трюк, что даёт мастеринговым лимитерам звучать
+// громче без клиппинга. amount подобран так, чтобы типичный уже сжатый сигнал почти не
+// искажался слышимо, а только пики выше него.
+function makeSaturationCurve(amount) {
+  const samples = 1024;
+  const curve = new Float32Array(samples);
+  const norm = Math.tanh(amount);
+  for (let i = 0; i < samples; i++) {
+    const x = (i * 2) / samples - 1;
+    curve[i] = Math.tanh(amount * x) / norm;
+  }
+  return curve;
+}
+
 let audioCtx = null;
 let compressor = null;
 function ensureCtx() {
@@ -65,14 +81,17 @@ function ensureCtx() {
       // компрессора — это позволяет держать GainNode сильно выше 1 не срезая пики в хрип,
       // а следующая makeupGain досредняет итоговую громкость до края лимитера.
       compressor = audioCtx.createDynamicsCompressor();
-      compressor.threshold.value = -28;
+      compressor.threshold.value = -32;
       compressor.knee.value = 4;
       compressor.ratio.value = 20;
       compressor.attack.value = 0.001;
       compressor.release.value = 0.1;
       const makeupGain = audioCtx.createGain();
-      makeupGain.gain.value = 1.8;
-      compressor.connect(makeupGain).connect(audioCtx.destination);
+      makeupGain.gain.value = 2.4;
+      const saturator = audioCtx.createWaveShaper();
+      saturator.curve = makeSaturationCurve(2.5);
+      saturator.oversample = "4x";
+      compressor.connect(makeupGain).connect(saturator).connect(audioCtx.destination);
     }
   }
   return audioCtx;
