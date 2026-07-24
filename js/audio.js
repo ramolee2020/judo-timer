@@ -22,8 +22,8 @@ const TTS_FALLBACK_TEXT = {
 // (максимум 1 = "как записано"), поэтому громкость реально поднимаем через Web Audio
 // (GainNode > 1), а следом ставим компрессор — иначе усиленные пики просто хрипят/клипуют
 // на слабом динамике телефона.
-const VOICE_GAIN = 9;
-const BEEP_VOLUME = 0.75; // тише самого синуса, зато с обертоном (см. countdownTickBeep) звучит ярче и громче на слух
+const VOICE_GAIN = 11;
+const BEEP_VOLUME = 1; // отдельная, более жёсткая шина (см. beepBus) — можно гнать громче голоса
 
 const audioElements = {};
 const mediaSources = {};
@@ -72,6 +72,7 @@ function makeSaturationCurve(amount) {
 
 let audioCtx = null;
 let compressor = null;
+let beepBus = null;
 function ensureCtx() {
   if (!audioCtx) {
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -81,17 +82,25 @@ function ensureCtx() {
       // компрессора — это позволяет держать GainNode сильно выше 1 не срезая пики в хрип,
       // а следующая makeupGain досредняет итоговую громкость до края лимитера.
       compressor = audioCtx.createDynamicsCompressor();
-      compressor.threshold.value = -32;
+      compressor.threshold.value = -34;
       compressor.knee.value = 4;
       compressor.ratio.value = 20;
       compressor.attack.value = 0.001;
       compressor.release.value = 0.1;
       const makeupGain = audioCtx.createGain();
-      makeupGain.gain.value = 2.4;
+      makeupGain.gain.value = 2.9;
       const saturator = audioCtx.createWaveShaper();
-      saturator.curve = makeSaturationCurve(2.5);
+      saturator.curve = makeSaturationCurve(3.2);
       saturator.oversample = "4x";
       compressor.connect(makeupGain).connect(saturator).connect(audioCtx.destination);
+
+      // Бипы — короткие синтетические тона, не человеческая речь: их можно гнать через
+      // более жёсткий сатуратор без риска, что лимитер, настроенный под голос, "запампит"
+      // и исказит фразы. Отдельная шина в обход voice-компрессора выше.
+      beepBus = audioCtx.createWaveShaper();
+      beepBus.curve = makeSaturationCurve(5);
+      beepBus.oversample = "4x";
+      beepBus.connect(audioCtx.destination);
     }
   }
   return audioCtx;
@@ -106,20 +115,24 @@ function tone(freq, durMs, volume, type) {
   osc.type = type || "sine";
   osc.frequency.value = freq;
   gain.gain.value = volume;
-  osc.connect(gain).connect(compressor);
+  osc.connect(gain).connect(beepBus);
   const now = ctx.currentTime;
   gain.gain.setValueAtTime(volume, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + durMs / 1000);
+  gain.gain.exponentialRampToValueAtTime(0.0005, now + durMs / 1000);
   osc.start(now);
-  osc.stop(now + durMs / 1000);
+  osc.stop(now + durMs / 1000 + 0.02);
 }
 
-// "Звонкий" бип вместо глухого синуса: треугольная волна (богаче обертонами, но не режет
-// слух как прямоугольная) на более высокой частоте + тихий обертон на октаву выше — вместе
-// звучит как "динь", а не "бум".
+// "Колокольчик" вместо плоского бипа: несколько НЕгармонично настроенных обертонов
+// (2.01x/2.99x/4.2x вместо ровных 2x/3x/4x) с разной скоростью затухания — так звучат
+// реальные колокола/глокеншпили, "дзинь" с металлическим шлейфом, а не одиночный писк.
+// Верхние частичные короче и тише — гаснут первыми, как у настоящего металла.
 export function countdownTickBeep() {
-  tone(1568, 90, BEEP_VOLUME, "triangle");
-  tone(3136, 70, BEEP_VOLUME * 0.35, "sine");
+  const base = 1760;
+  tone(base, 260, BEEP_VOLUME, "sine");
+  tone(base * 2.01, 170, BEEP_VOLUME * 0.6, "sine");
+  tone(base * 2.99, 120, BEEP_VOLUME * 0.4, "sine");
+  tone(base * 4.2, 80, BEEP_VOLUME * 0.25, "sine");
 }
 
 // На самом первом запуске приложения (холодный кэш, файлы ещё не скачаны) разблокировка
