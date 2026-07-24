@@ -21,7 +21,7 @@ function clampParams(p) {
 export function loadStore() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (!raw) return { lastParams: { ...DEFAULT_PARAMS }, customPresets: {} };
+    if (!raw) return { lastParams: { ...DEFAULT_PARAMS }, customPresets: {}, highContrast: false };
     const parsed = JSON.parse(raw);
     const customPresets = {};
     for (const [name, params] of Object.entries(parsed.customPresets || {})) {
@@ -30,9 +30,10 @@ export function loadStore() {
     return {
       lastParams: clampParams(parsed.lastParams || DEFAULT_PARAMS),
       customPresets,
+      highContrast: !!parsed.highContrast,
     };
   } catch (e) {
-    return { lastParams: { ...DEFAULT_PARAMS }, customPresets: {} };
+    return { lastParams: { ...DEFAULT_PARAMS }, customPresets: {}, highContrast: false };
   }
 }
 

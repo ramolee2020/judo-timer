@@ -6,13 +6,19 @@ import { FIELD_MIN, clampParams } from "./state.js";
 import { totalDuration, buildSequence, fmtClock } from "./timer-engine.js";
 
 const FIELDS = [
-  { key: "prep", label: "Подготовка, сек", step: 5 },
-  { key: "work", label: "Работа, сек", step: 10 },
-  { key: "rest", label: "Отдых, сек", step: 5 },
-  { key: "cycles", label: "Циклы", step: 1 },
-  { key: "sets", label: "Сеты", step: 1 },
-  { key: "restSets", label: "Отдых между сетами, сек", step: 5 },
+  { key: "prep", label: "Подготовка, сек" },
+  { key: "work", label: "Работа, сек" },
+  { key: "rest", label: "Отдых, сек" },
+  { key: "cycles", label: "Циклы" },
+  { key: "sets", label: "Сеты" },
+  { key: "restSets", label: "Отдых между сетами, сек" },
 ];
+
+// Шаг +/- всегда 1 (точная подстройка) — при удержании кнопки повтор разгоняется по трём
+// ступеням, чтобы быстро долистать и до больших значений, не требуя отдельного "крупного шага".
+const HOLD_START_MS = 400;
+const HOLD_FAST_MS = 1200;
+const HOLD_FASTEST_MS = 2600;
 
 // Простые монолинейные SVG-иконки для каждого поля — свои, без внешних шрифтов/иконок
 // (офлайн-PWA не может подгружать иконки из сети).
@@ -35,9 +41,11 @@ export function initSetupView(app) {
   const savedList = document.getElementById("savedList");
   const continuePausedBtn = document.getElementById("continuePausedBtn");
   const setupHint = document.getElementById("setupHint");
+  const contrastToggle = document.getElementById("contrastToggle");
 
   let params = { ...app.store.lastParams };
   let savedListOpen = false;
+  const fieldValueEls = {};
 
   function renderSavedList() {
     const names = Object.keys(app.store.customPresets);
@@ -89,9 +97,39 @@ export function initSetupView(app) {
     toggleSavedBtn.setAttribute("aria-expanded", String(savedListOpen));
   }
 
+  // Тап — мгновенный шаг ±1. Удержание — автоповтор, который разгоняется по трём ступеням
+  // (HOLD_START_MS/HOLD_FAST_MS/HOLD_FASTEST_MS), не меняя сам шаг: так можно и точно
+  // подстроить на 1, и быстро долистать до большого значения без отдельной "крупной" кнопки.
+  function attachHold(button, key, dir) {
+    let intervalId = null;
+    const timers = [];
+
+    function clearAll() {
+      if (intervalId) { clearInterval(intervalId); intervalId = null; }
+      timers.forEach(clearTimeout);
+      timers.length = 0;
+    }
+
+    function repeatAt(ms) {
+      if (intervalId) clearInterval(intervalId);
+      intervalId = setInterval(() => adjust(key, dir), ms);
+    }
+
+    button.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      adjust(key, dir);
+      timers.push(setTimeout(() => repeatAt(180), HOLD_START_MS));
+      timers.push(setTimeout(() => repeatAt(70), HOLD_FAST_MS));
+      timers.push(setTimeout(() => repeatAt(30), HOLD_FASTEST_MS));
+    });
+    button.addEventListener("pointerup", clearAll);
+    button.addEventListener("pointerleave", clearAll);
+    button.addEventListener("pointercancel", clearAll);
+  }
+
   function renderFields() {
     fieldsList.innerHTML = "";
-    FIELDS.forEach(({ key, label, step }) => {
+    FIELDS.forEach(({ key, label }) => {
       const row = document.createElement("div");
       row.className = "field-row";
 
@@ -116,7 +154,7 @@ export function initSetupView(app) {
       minus.type = "button";
       minus.textContent = "–";
       minus.setAttribute("aria-label", "Меньше: " + label);
-      minus.addEventListener("click", () => adjust(key, -step));
+      attachHold(minus, key, -1);
       stepper.appendChild(minus);
 
       const valueBtn = document.createElement("button");
@@ -126,12 +164,13 @@ export function initSetupView(app) {
       valueBtn.title = "Нажмите, чтобы ввести точное число";
       valueBtn.addEventListener("click", () => enterEditMode(key, valueBtn, stepper));
       stepper.appendChild(valueBtn);
+      fieldValueEls[key] = valueBtn;
 
       const plus = document.createElement("button");
       plus.type = "button";
       plus.textContent = "+";
       plus.setAttribute("aria-label", "Больше: " + label);
-      plus.addEventListener("click", () => adjust(key, step));
+      attachHold(plus, key, 1);
       stepper.appendChild(plus);
 
       body.appendChild(stepper);
@@ -165,7 +204,8 @@ export function initSetupView(app) {
 
   function adjust(key, delta) {
     params[key] = Math.max(FIELD_MIN[key], params[key] + delta);
-    renderFields();
+    const el = fieldValueEls[key];
+    if (el) el.textContent = String(params[key]);
     renderSummary();
   }
 
@@ -198,6 +238,18 @@ export function initSetupView(app) {
     if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return "цикла";
     return "циклов";
   }
+
+  function applyContrast() {
+    document.body.dataset.contrast = app.store.highContrast ? "high" : "normal";
+    contrastToggle.textContent = "Зальный режим: " + (app.store.highContrast ? "вкл" : "выкл");
+    contrastToggle.classList.toggle("active", !!app.store.highContrast);
+  }
+
+  contrastToggle.addEventListener("click", () => {
+    app.store.highContrast = !app.store.highContrast;
+    app.persistStore();
+    applyContrast();
+  });
 
   toggleSavedBtn.addEventListener("click", () => {
     savedListOpen = !savedListOpen;
@@ -246,6 +298,7 @@ export function initSetupView(app) {
   renderFields();
   renderSummary();
   refreshRunControls();
+  applyContrast();
 
   return {
     getParams: () => ({ ...params }),

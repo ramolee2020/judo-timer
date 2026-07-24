@@ -45,6 +45,7 @@ body[data-view="run"] .run{display:flex;}
 .saved-row{display:flex;justify-content:center;gap:18px;padding-top:18px;flex-wrap:wrap;}
 .text-btn{border:none;background:none;color:var(--tatami-deep);font-size:12px;
   text-decoration:underline;cursor:pointer;padding:4px 6px;}
+.text-btn.active{color:var(--ink);font-weight:700;}
 
 .saved-list{display:flex;flex-direction:column;gap:1px;background:var(--paper-line);
   border:1px solid var(--paper-line);border-radius:10px;overflow:hidden;margin-top:10px;}
@@ -112,6 +113,7 @@ body[data-view="run"] .run{display:flex;}
   position:relative;min-height:100dvh;width:100%;flex-direction:column;align-items:center;justify-content:space-between;
   padding:max(18px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom));
   color:#fff;background:var(--tatami);transition:background-color .4s ease;
+  touch-action:pan-y;
 }
 .run[data-phase="prep"]{background:var(--judo-blue);}
 .run[data-phase="work"]{background:var(--tatami);}
@@ -135,8 +137,8 @@ body[data-view="run"] .run{display:flex;}
   display:flex;align-items:center;justify-content:center;--ring-accent:#ffcf5c;}
 .run-ring-track{position:absolute;inset:0;border-radius:50%;
   background:conic-gradient(var(--ring-accent) calc(var(--pct,100)*1%), rgba(255,255,255,.2) 0);
-  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 12px));
-  mask:radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 12px));
+  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 30px), #000 calc(100% - 30px));
+  mask:radial-gradient(farthest-side, transparent calc(100% - 30px), #000 calc(100% - 30px));
   transition:filter .15s ease;}
 .run-ring.pulse-flash .run-ring-track{filter:brightness(1.3);}
 
@@ -160,5 +162,19 @@ body[data-view="run"] .run{display:flex;}
 .run-controls .ctrl.secondary{width:64px;height:64px;font-size:28px;flex:none;
   background:rgba(255,255,255,.18);color:#fff;border:2px solid rgba(255,255,255,.5);}
 .run-controls .ctrl.secondary:disabled{opacity:.35;cursor:default;}
+
+/* ===== "Зальный режим": высокий контраст для яркого света/дальней дистанции =====
+   Не косметика поверх обычной темы — отдельный набор более насыщенных цветов фаз и
+   сплошной (без opacity) вторичный текст, специально под условия, где обычная татами-
+   палитра теряется на солнце/под лампами зала. */
+body[data-contrast="high"] .run[data-phase="prep"]{background:#0b3f97;}
+body[data-contrast="high"] .run[data-phase="work"]{background:#1b7a4a;}
+body[data-contrast="high"] .run[data-phase="rest"],
+body[data-contrast="high"] .run[data-phase="restSets"]{background:#c73118;}
+body[data-contrast="high"] .run[data-phase="done"]{background:#123d27;}
+body[data-contrast="high"] .run-round-info{opacity:1;}
+body[data-contrast="high"] .run-total{opacity:1;font-weight:700;}
+body[data-contrast="high"] .run-dots .dot{background:rgba(255,255,255,.55);}
+body[data-contrast="high"] .run-dots .dot.done{background:#fff;}
 
 @media (prefers-reduced-motion:reduce){ .run{transition:none;} .ctrl{transition:none;} .run-time{animation:none;} }

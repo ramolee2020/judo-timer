@@ -310,6 +310,31 @@ export function initRunView({ onBackToSetup, onFinished }) {
     return true;
   }
 
+  // Свайп по всему рабочему экрану — альтернатива мелким кнопкам-стрелкам: тренер может
+  // переключать циклы не целясь, на бегу, потной/занятой рукой. Кнопки при этом остаются —
+  // это дополнительный способ, не замена. Свайпы, начатые на кнопке (её собственный клик
+  // всё ещё сработает как обычно), не считаются.
+  const SWIPE_MIN_X = 60;
+  const SWIPE_MAX_Y = 80;
+  let swipeStartX = null;
+  let swipeStartY = null;
+  let swipeFromControl = false;
+
+  runEl.addEventListener("pointerdown", (e) => {
+    swipeStartX = e.clientX;
+    swipeStartY = e.clientY;
+    swipeFromControl = !!e.target.closest("button");
+  });
+  runEl.addEventListener("pointerup", (e) => {
+    if (swipeStartX === null || swipeFromControl) { swipeStartX = null; return; }
+    const dx = e.clientX - swipeStartX;
+    const dy = e.clientY - swipeStartY;
+    swipeStartX = null;
+    if (Math.abs(dx) >= SWIPE_MIN_X && Math.abs(dy) < SWIPE_MAX_Y) {
+      jump(dx < 0 ? 1 : -1);
+    }
+  });
+
   pauseBtn.addEventListener("click", () => (running ? pause() : resume()));
   prevBtn.addEventListener("click", () => jump(-1));
   nextBtn.addEventListener("click", () => jump(1));
