@@ -1,10 +1,10 @@
-const CACHE = "judo-timer-v10";
+const CACHE = "judo-timer-v11";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./styles.css",
   "./js/app.js", "./js/state.js", "./js/timer-engine.js", "./js/audio.js",
   "./js/setup-view.js", "./js/run-view.js",
   "./assets/icon-192.png", "./assets/icon-512.png", "./assets/apple-touch-icon.png",
-  "./assets/audio/hajime-user.wav", "./assets/audio/mate-user.wav",
+  "./assets/audio/hajime-user.oga", "./assets/audio/mate-user.oga",
   "./assets/audio/prigotovilis-user.oga", "./assets/audio/soromade-user.oga",
 ];
 
