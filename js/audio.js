@@ -4,9 +4,9 @@
 
 const PHRASE_FILES = {
   prep: "assets/audio/prigotovilis-user.oga",
-  work: "assets/audio/hajime-user.wav",
-  rest: "assets/audio/mate-user.wav",
-  restSets: "assets/audio/mate-user.wav",
+  work: "assets/audio/hajime-user.oga",
+  rest: "assets/audio/mate-user.oga",
+  restSets: "assets/audio/mate-user.oga",
   done: "assets/audio/soromade-user.oga",
 };
 
