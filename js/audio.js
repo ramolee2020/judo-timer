@@ -3,11 +3,11 @@
 // заодно легко подправить громкость/частоту на этапе "коррекции звука" позже).
 
 const PHRASE_FILES = {
-  prep: "assets/audio/prigotovilis-user.oga",
-  work: "assets/audio/hajime-user.oga",
-  rest: "assets/audio/mate-user.oga",
-  restSets: "assets/audio/mate-user.oga",
-  done: "assets/audio/soromade-user.oga",
+  prep: "assets/audio/prigotovilis-tts.oga",
+  work: "assets/audio/hajime-tts.oga",
+  rest: "assets/audio/mate-tts.oga",
+  restSets: "assets/audio/mate-tts.oga",
+  done: "assets/audio/soromade-tts.oga",
 };
 
 const TTS_FALLBACK_TEXT = {
@@ -18,11 +18,11 @@ const TTS_FALLBACK_TEXT = {
   done: "Соромадэ",
 };
 
-// Записи с телефона тренера — тихие. Обычный volume у <audio> может только приглушать
-// (максимум 1 = "как записано"), поэтому громкость реально поднимаем через Web Audio
-// (GainNode > 1), а следом ставим компрессор — иначе усиленные пики просто хрипят/клипуют
-// на слабом динамике телефона.
-const VOICE_GAIN = 11;
+// 2026-08-18: фразы сгенерированы TTS и уже нормализованы почти до 0dBFS на этапе
+// генерации — в отличие от старых тихих записей с телефона тренера, им не нужен
+// 11-кратный GainNode. Компрессор/сатуратор ниже оставлены как лёгкий "глюинг"/лимитер
+// на случай отличий громкости между фразами, а не как основной источник усиления.
+const VOICE_GAIN = 1.3;
 const BEEP_VOLUME = 1; // отдельная, более жёсткая шина (см. beepBus) — можно гнать громче голоса
 
 const audioElements = {};

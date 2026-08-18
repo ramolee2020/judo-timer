@@ -1,11 +1,11 @@
-const CACHE = "judo-timer-v11";
+const CACHE = "judo-timer-v12";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./styles.css",
   "./js/app.js", "./js/state.js", "./js/timer-engine.js", "./js/audio.js",
   "./js/setup-view.js", "./js/run-view.js",
   "./assets/icon-192.png", "./assets/icon-512.png", "./assets/apple-touch-icon.png",
-  "./assets/audio/hajime-user.oga", "./assets/audio/mate-user.oga",
-  "./assets/audio/prigotovilis-user.oga", "./assets/audio/soromade-user.oga",
+  "./assets/audio/hajime-tts.oga", "./assets/audio/mate-tts.oga",
+  "./assets/audio/prigotovilis-tts.oga", "./assets/audio/soromade-tts.oga",
 ];
 
 self.addEventListener("install", (e) => {
