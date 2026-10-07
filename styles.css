@@ -1,28 +1,68 @@
+/* ===== judo-timer — оформление «Татами» =====
+   Идея: всё в языке татами. Фон — плетение из соломы игуса, каждая настройка — мат
+   с тёмно-синей окантовкой (хери), прогресс по циклам — ряд матов 2:1.
+   Цвета фаз (синий — подготовка, зелёный — работа, красный — отдых) не меняем:
+   тренер к ним привык, это главный сигнал издалека. */
+
+@font-face{font-family:"Tektur";font-weight:600;font-display:swap;
+  src:url(assets/fonts/tektur-cyrillic-600.woff2) format("woff2");unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:"Tektur";font-weight:600;font-display:swap;
+  src:url(assets/fonts/tektur-latin-600.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2212;}
+@font-face{font-family:"Tektur";font-weight:700;font-display:swap;
+  src:url(assets/fonts/tektur-cyrillic-700.woff2) format("woff2");unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:"Tektur";font-weight:700;font-display:swap;
+  src:url(assets/fonts/tektur-latin-700.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2212;}
+@font-face{font-family:"Onest";font-weight:400;font-display:swap;
+  src:url(assets/fonts/onest-cyrillic-400.woff2) format("woff2");unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:"Onest";font-weight:400;font-display:swap;
+  src:url(assets/fonts/onest-latin-400.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2212;}
+@font-face{font-family:"Onest";font-weight:600;font-display:swap;
+  src:url(assets/fonts/onest-cyrillic-600.woff2) format("woff2");unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:"Onest";font-weight:600;font-display:swap;
+  src:url(assets/fonts/onest-latin-600.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2212;}
+@font-face{font-family:"Onest";font-weight:700;font-display:swap;
+  src:url(assets/fonts/onest-cyrillic-700.woff2) format("woff2");unicode-range:U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:"Onest";font-weight:700;font-display:swap;
+  src:url(assets/fonts/onest-latin-700.woff2) format("woff2");unicode-range:U+0000-00FF,U+2000-206F,U+2212;}
+
 :root{
-  --ink:#142a20; --tatami:#2f6f4f; --tatami-deep:#1c4530; --tatami-tint:#e4efe6;
-  --judo-blue:#1c4f8c; --score-red:#b3402a; --straw:#f3efe0; --paper:#fbf9f2;
-  --paper-line:#dcd5c1; --text:#1c2a22; --text-soft:#4c5850;
-  --font-display:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-  --font-body:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* мат и окантовка */
+  --igusa:#d9cf9f;        /* солома татами — фон экрана настройки */
+  --igusa-line:rgba(96,82,32,.10);
+  --mat:#f6f3e6;          /* светлая «плитка» поля, цвет как у белого кимоно */
+  --heri:#23315f;         /* тёмно-синяя окантовка татами — кнопки, рамки */
+  --heri-soft:#dfe3ef;
+  --ink:#1b1a14; --text-soft:#5a5640;
+  /* фазы */
+  --prep:#2747a6; --work:#1e7a4c; --rest:#c2411f; --done:#23315f;
+  --ring-accent:#ffd25c;
+  --font-display:"Tektur",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 @media (prefers-color-scheme:dark){
-  :root{ --ink:#eef3ee; --tatami:#5fae82; --tatami-deep:#7cc79c; --tatami-tint:#16241c;
-    --judo-blue:#6ea3dd; --score-red:#e0725a; --straw:#0f1712; --paper:#141d17;
-    --paper-line:#2b3830; --text:#e9efe9; --text-soft:#a9b6ac; }
+  :root:not([data-theme="light"]){
+    --igusa:#16180f; --igusa-line:rgba(217,207,159,.06);
+    --mat:#22251a; --heri:#9fb0e6; --heri-soft:#2b3150;
+    --ink:#f1edda; --text-soft:#b6b08f;
+  }
 }
-:root[data-theme="dark"]{ --ink:#eef3ee; --tatami:#5fae82; --tatami-deep:#7cc79c; --tatami-tint:#16241c;
-  --judo-blue:#6ea3dd; --score-red:#e0725a; --straw:#0f1712; --paper:#141d17;
-  --paper-line:#2b3830; --text:#e9efe9; --text-soft:#a9b6ac; }
-:root[data-theme="light"]{ --ink:#142a20; --tatami:#2f6f4f; --tatami-deep:#1c4530; --tatami-tint:#e4efe6;
-  --judo-blue:#1c4f8c; --score-red:#b3402a; --straw:#f3efe0; --paper:#fbf9f2;
-  --paper-line:#dcd5c1; --text:#1c2a22; --text-soft:#4c5850; }
+:root[data-theme="dark"]{
+  --igusa:#16180f; --igusa-line:rgba(217,207,159,.06);
+  --mat:#22251a; --heri:#9fb0e6; --heri-soft:#2b3150;
+  --ink:#f1edda; --text-soft:#b6b08f;
+}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;}
-body{margin:0;background:var(--straw);color:var(--text);font-family:var(--font-body);
+body{margin:0;color:var(--ink);font-family:var(--font-body);
+  background-color:var(--igusa);
+  /* плетение игуса: частые горизонтальные волокна + редкие «стежки» */
+  background-image:
+    repeating-linear-gradient(0deg,var(--igusa-line) 0 1px,transparent 1px 4px),
+    repeating-linear-gradient(90deg,transparent 0 59px,var(--igusa-line) 59px 60px);
   -webkit-font-smoothing:antialiased;overscroll-behavior:none;}
-h1,h2,h3{font-family:var(--font-display);font-weight:700;text-transform:uppercase;margin:0;color:var(--ink);}
-button{font-family:inherit;}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;margin:0;color:var(--ink);}
+button{font-family:inherit;color:inherit;}
 
 /* переключение экранов: оба лежат в DOM, видимость управляется через body[data-view] */
 .view-setup{display:none;}
@@ -31,150 +71,156 @@ body[data-view="setup"] .view-setup{display:flex;}
 body[data-view="run"] .run{display:flex;}
 
 /* ===== Экран 1: Программирование ===== */
-.app{max-width:460px;margin:0 auto;min-height:100dvh;flex-direction:column;
-  padding:max(18px,env(safe-area-inset-top)) 18px max(18px,env(safe-area-inset-bottom));}
+.app{max-width:480px;margin:0 auto;min-height:100dvh;flex-direction:column;
+  padding:max(16px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom));}
 
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);}
-.brand img{width:26px;height:26px;flex:none;object-fit:contain;border-radius:5px;}
-.brand span{font-family:var(--font-display);font-weight:700;text-transform:uppercase;
-  font-size:13px;letter-spacing:.04em;line-height:1.2;}
-.eyebrow{font-family:var(--font-display);font-weight:500;text-transform:uppercase;
-  letter-spacing:.14em;font-size:11px;color:var(--tatami-deep);}
+.brand img{width:30px;height:30px;flex:none;object-fit:contain;border-radius:6px;}
+.brand span{font-family:var(--font-display);font-weight:700;font-size:18px;letter-spacing:.01em;}
+.eyebrow{display:none;}
 
-.saved-row{display:flex;justify-content:center;gap:18px;padding-top:18px;flex-wrap:wrap;}
-.text-btn{border:none;background:none;color:var(--tatami-deep);font-size:12px;
-  text-decoration:underline;cursor:pointer;padding:4px 6px;}
-.text-btn.active{color:var(--ink);font-weight:700;}
+.saved-row{display:flex;gap:8px;padding-top:14px;flex-wrap:wrap;}
+.text-btn{border:1.5px solid var(--heri);background:transparent;color:var(--heri);
+  font-size:13px;font-weight:600;border-radius:999px;padding:7px 12px;cursor:pointer;line-height:1.1;}
+.text-btn:hover{background:var(--heri-soft);}
+.text-btn.active{background:var(--heri);color:var(--mat);}
+.text-btn:focus-visible{outline:3px solid var(--prep);outline-offset:2px;}
+.dial-wrap .text-btn{border:none;text-decoration:underline;align-self:center;background:none;}
 
-.saved-list{display:flex;flex-direction:column;gap:1px;background:var(--paper-line);
-  border:1px solid var(--paper-line);border-radius:10px;overflow:hidden;margin-top:10px;}
+.saved-list{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
 .saved-list[hidden]{display:none;}
-.saved-empty{background:var(--paper);margin:0;padding:12px;font-size:12px;
+.saved-empty{background:var(--mat);margin:0;padding:12px;font-size:13px;border-radius:4px;
   color:var(--text-soft);text-align:center;}
-.saved-item{background:var(--paper);display:flex;align-items:center;justify-content:space-between;}
-.saved-item-name{flex:1;text-align:left;border:none;background:none;color:var(--text);
-  font-size:13px;padding:10px 12px;cursor:pointer;}
-.saved-item-name:hover,.saved-item-name:focus-visible{color:var(--tatami-deep);}
+.saved-item{background:var(--mat);display:flex;align-items:center;justify-content:space-between;
+  border-left:6px solid var(--heri);border-radius:4px;}
+.saved-item-name{flex:1;text-align:left;border:none;background:none;color:var(--ink);
+  font-size:15px;font-weight:600;padding:12px;cursor:pointer;}
+.saved-item-name:hover,.saved-item-name:focus-visible{color:var(--heri);}
 .saved-item-delete{flex:none;border:none;background:none;color:var(--text-soft);
-  font-size:14px;padding:10px 12px;cursor:pointer;}
-.saved-item-delete:hover{color:var(--score-red);}
+  font-size:16px;padding:12px 14px;cursor:pointer;}
+.saved-item-delete:hover{color:var(--rest);}
 
-.summary-line{text-align:center;font-family:var(--font-display);font-size:13px;
-  letter-spacing:.04em;color:var(--text-soft);margin-top:14px;font-variant-numeric:tabular-nums;}
-.summary-line b{color:var(--ink);}
+/* Итог тренировки — главное число экрана: сколько всё займёт */
+.summary-line{margin-top:22px;font-size:15px;color:var(--text-soft);
+  font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;}
+.summary-line b{font-family:var(--font-display);font-weight:700;font-size:52px;line-height:1;
+  color:var(--ink);letter-spacing:-.01em;}
 
-/* Мини-таймлайн тренировки: форма тренировки одним взглядом ещё до старта — сегменты
-   пропорциональны длительности фаз (flex-grow = duration), цвет как на рабочем экране. */
-.timeline{display:flex;gap:1px;height:8px;border-radius:4px;overflow:hidden;
-  margin-top:10px;background:var(--paper-line);}
-.timeline .seg{height:100%;}
-.timeline .seg-prep{background:var(--judo-blue);}
-.timeline .seg-work{background:var(--tatami);}
-.timeline .seg-rest,.timeline .seg-restSets{background:var(--score-red);}
+/* Форма тренировки — ряд матов: каждый сегмент — фаза, ширина пропорциональна времени */
+.timeline{display:flex;gap:3px;height:16px;margin-top:12px;}
+.timeline .seg{height:100%;border-radius:2px;min-width:3px;}
+.timeline .seg-prep{background:var(--prep);}
+.timeline .seg-work{background:var(--work);}
+.timeline .seg-rest,.timeline .seg-restSets{background:var(--rest);}
 
-.settings-list{display:flex;flex-direction:column;gap:1px;background:var(--paper-line);
-  border:1px solid var(--paper-line);border-radius:10px;overflow:hidden;margin-top:10px;}
-.field-row{background:var(--paper);display:flex;align-items:center;
-  padding:20px 16px;gap:16px;}
-.field-icon{flex:none;width:60px;height:60px;border-radius:14px;background:var(--tatami-tint);
-  color:var(--tatami-deep);display:flex;align-items:center;justify-content:center;}
-.field-icon svg{width:34px;height:34px;}
-.field-body{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:14px;}
-.field-label{font-size:19px;font-weight:700;color:var(--tatami-deep);text-align:center;}
-.stepper{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;}
-.stepper button{width:60px;height:60px;border-radius:50%;flex:none;border:none;
-  background:var(--tatami-deep);color:var(--paper);font-size:29px;line-height:1;cursor:pointer;
+/* Поля настройки — маты с окантовкой хери слева */
+.settings-list{display:flex;flex-direction:column;gap:8px;margin-top:18px;}
+.field-row{background:var(--mat);display:flex;align-items:center;gap:14px;
+  padding:14px 14px 14px 12px;border-left:10px solid var(--heri);border-radius:4px;}
+.field-icon{flex:none;width:44px;height:44px;border-radius:10px;background:var(--heri-soft);
+  color:var(--heri);display:flex;align-items:center;justify-content:center;align-self:flex-start;}
+.field-icon svg{width:26px;height:26px;}
+.field-body{flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:8px;}
+.field-label{font-size:16px;font-weight:600;color:var(--ink);line-height:44px;}
+.stepper{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;}
+.stepper button{width:56px;height:56px;border-radius:14px;flex:none;border:none;
+  background:var(--heri);color:var(--mat);font-size:30px;font-weight:600;line-height:1;cursor:pointer;
   transition:transform .1s;}
-.stepper button:active{transform:scale(.92);}
-.stepper .field-value{font-family:var(--font-display);font-size:40px;font-weight:700;
-  min-width:100px;text-align:center;font-variant-numeric:tabular-nums;color:var(--ink);
+.stepper button:active{transform:scale(.93);}
+.stepper button:focus-visible{outline:3px solid var(--prep);outline-offset:2px;}
+.stepper .field-value{font-family:var(--font-display);font-size:44px;font-weight:700;
+  min-width:96px;text-align:center;font-variant-numeric:tabular-nums;color:var(--ink);
   background:none;border:none;cursor:pointer;padding:2px 0;}
-.stepper input.field-value-input{min-width:100px;width:120px;text-align:center;
+.stepper input.field-value-input{min-width:96px;width:120px;text-align:center;
   font-family:var(--font-display);font-size:40px;font-weight:700;color:var(--ink);
-  border:1px solid var(--tatami);border-radius:8px;background:var(--paper);}
+  border:2px solid var(--heri);border-radius:8px;background:var(--mat);}
 
 .dial-wrap{display:flex;flex-direction:column;align-items:stretch;justify-content:center;
-  gap:12px;padding:22px 0 0;}
-.ctrl{border-radius:16px;border:2px solid var(--ink);background:var(--ink);color:var(--paper);
-  font-family:var(--font-display);text-transform:uppercase;letter-spacing:.05em;font-weight:700;
+  gap:10px;padding:20px 0 0;}
+.ctrl{border-radius:14px;border:2px solid var(--heri);background:var(--heri);color:var(--mat);
+  font-family:var(--font-display);font-weight:700;letter-spacing:.02em;
   cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
   transition:transform .12s;}
 .ctrl:active{transform:scale(.97);}
-.ctrl.primary{width:100%;height:72px;font-size:20px;border-radius:20px;}
+.ctrl.primary{width:100%;height:76px;font-size:28px;}
 .ctrl.secondary{border-radius:50%;}
-.ctrl:focus-visible{outline:3px solid var(--judo-blue);outline-offset:3px;}
+.ctrl:focus-visible{outline:3px solid var(--prep);outline-offset:3px;}
 
-.hint{text-align:center;font-size:12px;color:var(--text-soft);padding:10px 0 2px;min-height:16px;}
+.hint{text-align:center;font-size:13px;color:var(--text-soft);padding:10px 0 2px;min-height:16px;}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
 
 /* ===== Экран 2: Рабочий экран ===== */
 .run{
   position:relative;min-height:100dvh;width:100%;flex-direction:column;align-items:center;justify-content:space-between;
   padding:max(18px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom));
-  color:#fff;background:var(--tatami);transition:background-color .4s ease;
+  color:#fff;background-color:var(--work);transition:background-color .4s ease;
+  /* то же плетение татами, но светлыми волокнами поверх цвета фазы */
+  background-image:
+    repeating-linear-gradient(0deg,rgba(255,255,255,.045) 0 1px,transparent 1px 5px),
+    repeating-linear-gradient(90deg,transparent 0 79px,rgba(0,0,0,.06) 79px 80px);
   touch-action:pan-y;
 }
-.run[data-phase="prep"]{background:var(--judo-blue);}
-.run[data-phase="work"]{background:var(--tatami);}
-.run[data-phase="rest"],.run[data-phase="restSets"]{background:var(--score-red);}
-.run[data-phase="done"]{background:var(--tatami-deep);}
+.run[data-phase="prep"]{background-color:var(--prep);}
+.run[data-phase="work"]{background-color:var(--work);}
+.run[data-phase="rest"],.run[data-phase="restSets"]{background-color:var(--rest);}
+.run[data-phase="done"]{background-color:var(--done);}
 
-/* Полоса прогресса всей тренировки (не только текущей фазы) — вдоль самого верха экрана,
-   поверх safe-area, как индикатор загрузки видео. Отдельно от кольца, которое всегда
-   про текущую фазу. */
-.run-progress{position:absolute;top:0;left:0;right:0;height:4px;background:rgba(255,255,255,.22);z-index:5;}
+/* Прогресс всей тренировки — тонкая полоса по верхнему краю */
+.run-progress{position:absolute;top:0;left:0;right:0;height:6px;background:rgba(0,0,0,.18);z-index:5;}
 .run-progress-fill{height:100%;width:0%;background:#fff;transition:width .25s linear;}
 
-.run-back{align-self:flex-start;background:rgba(255,255,255,.16);border:none;color:#fff;
-  border-radius:20px;padding:8px 14px;font-size:13px;cursor:pointer;}
+.run-back{align-self:flex-start;background:rgba(0,0,0,.18);border:none;color:#fff;
+  border-radius:999px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;}
+.run-back:focus-visible{outline:3px solid #fff;outline-offset:2px;}
 
-.run-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;}
-.run-phase-label{font-family:var(--font-display);font-weight:700;
-  letter-spacing:.02em;font-size:clamp(18px,4vw,28px);color:#fff;opacity:.95;}
+.run-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+.run-phase-label{font-family:var(--font-display);font-weight:600;
+  font-size:clamp(22px,5vw,34px);color:#fff;}
 
-.run-ring{position:relative;width:min(80vw,320px);height:min(80vw,320px);flex:none;
-  display:flex;align-items:center;justify-content:center;--ring-accent:#ffcf5c;}
+.run-ring{position:relative;width:min(86vw,60vh,600px);height:min(86vw,60vh,600px);flex:none;
+  display:flex;align-items:center;justify-content:center;}
 .run-ring-track{position:absolute;inset:0;border-radius:50%;
-  background:conic-gradient(var(--ring-accent) calc(var(--pct,100)*1%), rgba(255,255,255,.2) 0);
+  background:conic-gradient(var(--ring-accent) calc(var(--pct,100)*1%), rgba(0,0,0,.2) 0);
   -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 30px), #000 calc(100% - 30px));
   mask:radial-gradient(farthest-side, transparent calc(100% - 30px), #000 calc(100% - 30px));
   transition:filter .15s ease;}
 .run-ring.pulse-flash .run-ring-track{filter:brightness(1.3);}
 
-.run-time{position:relative;font-family:var(--font-display);font-weight:800;
-  font-size:clamp(4.5rem,22vw,8rem);line-height:1;color:#fff;font-variant-numeric:tabular-nums;}
+.run-time{position:relative;font-family:var(--font-display);font-weight:700;
+  font-size:clamp(3.8rem,min(20.5vw,13vh),9rem);line-height:1;color:#fff;font-variant-numeric:tabular-nums;
+  letter-spacing:-.03em;}
 @keyframes runTimePulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
 .run-time.pulse{animation:runTimePulse .5s ease-in-out infinite;}
 
-.run-round-info{font-size:clamp(14px,3vw,20px);font-weight:600;color:#fff;opacity:.96;font-variant-numeric:tabular-nums;}
-.run-dots{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;max-width:80vw;}
-.run-dots .dot{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.32);flex:none;
-  transition:transform .15s ease,background .15s ease,box-shadow .15s ease;}
-.run-dots .dot.done{background:rgba(255,255,255,.9);}
-.run-dots .dot.current{background:#fff;transform:scale(1.3);box-shadow:0 0 0 4px rgba(255,255,255,.25);}
-.run-dots .dot-sep{width:1px;height:14px;background:rgba(255,255,255,.4);flex:none;}
-.run-total{font-size:clamp(13px,2.4vw,17px);font-weight:600;color:#fff;opacity:.9;padding-bottom:6px;}
+.run-round-info{font-size:clamp(16px,3.4vw,22px);font-weight:600;color:#fff;font-variant-numeric:tabular-nums;}
 
-.run-controls{display:flex;align-items:center;justify-content:center;gap:16px;width:100%;}
-.run-controls .ctrl.primary{flex:1;height:72px;font-size:18px;
+/* Циклы — ряд матов 2:1; пройденные белые, текущий крупнее, разделитель между сетами */
+.run-dots{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;max-width:86vw;}
+.run-dots .dot{width:22px;height:11px;border-radius:2px;background:rgba(255,255,255,.28);flex:none;
+  transition:transform .15s ease,background .15s ease;}
+.run-dots .dot.done{background:rgba(255,255,255,.92);}
+.run-dots .dot.current{background:var(--ring-accent);transform:scale(1.25);}
+.run-dots .dot-sep{width:2px;height:18px;background:rgba(255,255,255,.5);flex:none;margin:0 4px;}
+.run-total{font-size:clamp(15px,2.8vw,19px);font-weight:600;color:#fff;padding-bottom:8px;font-variant-numeric:tabular-nums;}
+
+.run-controls{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;max-width:520px;}
+.run-controls .ctrl.primary{flex:1;height:76px;font-size:26px;
   background:#fff;color:var(--ink);border-color:#fff;}
-.run-controls .ctrl.secondary{width:64px;height:64px;font-size:28px;flex:none;
-  background:rgba(255,255,255,.18);color:#fff;border:2px solid rgba(255,255,255,.5);}
+.run-controls .ctrl.secondary{width:68px;height:68px;font-size:32px;flex:none;border-radius:14px;
+  background:rgba(0,0,0,.18);color:#fff;border:2px solid rgba(255,255,255,.55);}
 .run-controls .ctrl.secondary:disabled{opacity:.35;cursor:default;}
+.run-controls .ctrl:focus-visible{outline:3px solid #fff;}
 
-/* ===== "Зальный режим": высокий контраст для яркого света/дальней дистанции =====
-   Не косметика поверх обычной темы — отдельный набор более насыщенных цветов фаз и
-   сплошной (без opacity) вторичный текст, специально под условия, где обычная татами-
-   палитра теряется на солнце/под лампами зала. */
-body[data-contrast="high"] .run[data-phase="prep"]{background:#0b3f97;}
-body[data-contrast="high"] .run[data-phase="work"]{background:#1b7a4a;}
+/* ===== «Зальный режим»: высокий контраст для яркого света и дальней дистанции ===== */
+body[data-contrast="high"] .run{background-image:none;}
+body[data-contrast="high"] .run[data-phase="prep"]{background-color:#0b3f97;}
+body[data-contrast="high"] .run[data-phase="work"]{background-color:#11743f;}
 body[data-contrast="high"] .run[data-phase="rest"],
-body[data-contrast="high"] .run[data-phase="restSets"]{background:#c73118;}
-body[data-contrast="high"] .run[data-phase="done"]{background:#123d27;}
-body[data-contrast="high"] .run-round-info{opacity:1;}
-body[data-contrast="high"] .run-total{opacity:1;font-weight:700;}
-body[data-contrast="high"] .run-dots .dot{background:rgba(255,255,255,.55);}
+body[data-contrast="high"] .run[data-phase="restSets"]{background-color:#c42d12;}
+body[data-contrast="high"] .run[data-phase="done"]{background-color:#141c3d;}
+body[data-contrast="high"] .run-total{font-weight:700;}
+body[data-contrast="high"] .run-dots .dot{background:rgba(255,255,255,.5);}
 body[data-contrast="high"] .run-dots .dot.done{background:#fff;}
 
-@media (prefers-reduced-motion:reduce){ .run{transition:none;} .ctrl{transition:none;} .run-time{animation:none;} }
+@media (prefers-reduced-motion:reduce){ .run{transition:none;} .ctrl,.stepper button{transition:none;} .run-time{animation:none;} }

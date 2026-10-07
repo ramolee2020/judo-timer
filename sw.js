@@ -1,4 +1,4 @@
-const CACHE = "judo-timer-v13";
+const CACHE = "judo-timer-v14";
 const ASSETS = [
   "./", "./index.html", "./manifest.webmanifest", "./styles.css",
   "./js/app.js", "./js/state.js", "./js/timer-engine.js", "./js/audio.js",
@@ -6,6 +6,9 @@ const ASSETS = [
   "./assets/icon-192.png", "./assets/icon-512.png", "./assets/apple-touch-icon.png",
   "./assets/audio/hajime-tts.oga", "./assets/audio/mate-tts.oga",
   "./assets/audio/prigotovilis-tts.oga", "./assets/audio/soromade-tts.oga",
+  ...["tektur-cyrillic-600","tektur-latin-600","tektur-cyrillic-700","tektur-latin-700",
+      "onest-cyrillic-400","onest-latin-400","onest-cyrillic-600","onest-latin-600",
+      "onest-cyrillic-700","onest-latin-700"].map((f) => "./assets/fonts/" + f + ".woff2"),
 ];
 
 self.addEventListener("install", (e) => {
